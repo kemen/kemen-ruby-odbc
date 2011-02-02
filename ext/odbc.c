@@ -99,14 +99,16 @@ BOOL INSTAPI SQLReadFileDSNW(LPWSTR, LPWSTR, LPWSTR, LPWSTR, WORD, WORD *);
 BOOL INSTAPI SQLWriteFileDSNW(LPWSTR, LPWSTR, LPWSTR, LPWSTR);
 #endif
 
+
+#endif /* UNICODE */
+
+/* rd: moved here so that all ruby string are marked with rb_encv */
 #if defined(HAVE_RUBY_ENCODING_H) && HAVE_RUBY_ENCODING_H
 #define USE_RB_ENC 1
 #include "ruby/encoding.h"
 static rb_encoding *rb_enc = NULL;
 static VALUE rb_encv = Qnil;
 #endif
-
-#endif /* UNICODE */
 
 #ifndef HAVE_RB_DEFINE_ALLOC_FUNC
 #define rb_define_alloc_func(cls, func) \
@@ -6357,6 +6359,8 @@ do_fetch(STMT *q, int mode)
 #endif
 	    default:
 		v = rb_tainted_str_new(valp, curlen);
+        /* rd: added association with the configured encoding */
+		rb_enc_associate(v, rb_enc);
 		break;
 	    }
 	}
@@ -8421,12 +8425,12 @@ Init_odbc()
 
 #ifdef UNICODE
     rb_define_const(Modbc, "UTF8", Qtrue);
+#endif
+
+/* rd: moved here so that every ruby string is associated with utf-8 */
 #ifdef USE_RB_ENC
     rb_enc = rb_utf8_encoding();
     rb_encv = rb_enc_from_encoding(rb_enc);
-#endif
-#else
-    rb_define_const(Modbc, "UTF8", Qfalse);
 #endif
 
 #ifdef TRACING
